@@ -9,3 +9,7 @@ Node JS based simple TODO server
 * It has no dependency on external modules
 * Used plain node js and built in "http" and "fs" modueles
 * Supports static content service (Content-Type, Caching pending) (Commented in code)
+* Runs on port 9898
+
+# To Run
+```node simple-todoserver.js```
