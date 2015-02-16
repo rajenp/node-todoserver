@@ -201,7 +201,7 @@
                 if (!task) {
                     return result404;
                 }
-                task.id = new Date().getTime();
+                task.id = Date.now ? Date.now() : new Date().getTime();
                 tasks[task.id] = task;
                 return {
                     code: 200,
