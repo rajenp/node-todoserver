@@ -30,19 +30,42 @@
         result501 = {
             code: 501
         },
+        result405 = {
+            code: 405
+        },
         routes = [],
         SimpleServer = function () {
             var Helper = {
                 headers: {
                     "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+                    "Access-Control-Allow-Methods": "GET, POST, GET, PUT, DELETE, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type"
                 },
                 parseUrl: function (url, routePath) {
                     var paramNames = [],
+                        query,
                         params = {},
+                        tokens,
+                        qTokens,
                         route,
-                        match;
+                        match,
+                        qIndex = url.indexOf("?");
+                    if (qIndex > 0) {
+                        query = url.substring(qIndex + 1);
+                        url = url.substring(0, qIndex);
+                        tokens = query.split("&");
+                        tokens.forEach(function (token) {
+                            if (token) {
+                                qTokens = token.split("=");
+                                if (qTokens.length === 2) {
+                                    if (typeof qTokens[1] === "string" && qTokens[1].match(/^\s*(true|false)\s*$/img)) {
+                                        qTokens[1] = !!qTokens[1].match(/true/img);
+                                    }
+                                    params[qTokens[0]] = qTokens[1];
+                                }
+                            }
+                        });
+                    }
                     route = routePath.replace(/\/\:([^\:\/]+)/img, function () {
                         paramNames.push(arguments[1]);
                         return "/([^\/]+)";
@@ -128,7 +151,7 @@
                         length = routes.length,
                         route,
                         result = result404,
-                        pathParams,
+                        params,
                         callback = function (body) {
                             req.body = body.data; //inject body
                             result = route.handler(req, res);
@@ -137,9 +160,9 @@
                         };
                     while (index < length) {
                         route = routes[index];
-                        pathParams = Helper.parseUrl(req.url, route.path);
-                        if (pathParams) { //this url matches the route
-                            req.pathParams = pathParams; //inject path params
+                        params = Helper.parseUrl(req.url, route.path);
+                        if (params) { //this url matches the route
+                            req.params = params; //inject path params
                             console.log("Route: ", route.path);
                             if (req.method === "OPTIONS") {
                                 result = {
@@ -147,7 +170,7 @@
                                 };
                                 break;
                             }
-                            if (req.method === "POST") {
+                            if (req.method === "POST" || req.method === "PUT") {
                                 Helper.onRequestBody(req, callback);
                                 return;
                             }
@@ -171,11 +194,12 @@
                 };
             }).onRoute("/todo/tasks/create",
             function (req) {
+                if (req.method !== "POST") {
+                    return result405;
+                }
                 var task = req.body;
                 if (!task) {
-                    return {
-                        code: 404
-                    };
+                    return result404;
                 }
                 task.id = new Date().getTime();
                 tasks[task.id] = task;
@@ -185,10 +209,14 @@
                 };
             }).onRoute("/todo/tasks/search",
             function (req) {
-                var queryMap = req.body,
+                if (req.method !== "GET") {
+                    return result405;
+                }
+                var queryMap = req.params,
                     queryKeys = queryMap && Object.keys(queryMap),
                     list = [],
                     aTask;
+                console.log(queryMap);
                 if (!queryKeys || !queryKeys.length) {
                     list = Object.keys(tasks).map(function (key) {
                         return tasks[key];
@@ -210,7 +238,10 @@
                 };
             }).onRoute("/todo/tasks/:id/edit",
             function (req) {
-                var params = req.pathParams,
+                if (req.method !== "PUT") {
+                    return result405;
+                }
+                var params = req.params,
                     data = req.body,
                     task = tasks[params.id];
                 if (!task || !data) {
@@ -252,7 +283,10 @@
                     return result;*/
             }).onRoute("/todo/tasks/:id/delete",
             function (req) {
-                var params = req.pathParams,
+                if (req.method !== "DELETE") {
+                    return result405;
+                }
+                var params = req.params,
                     taskId = params.id,
                     task = tasks[taskId];
                 if (!task) {
