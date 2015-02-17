@@ -12,7 +12,9 @@ Node JS based simple TODO server
 * Runs on port 9898
 
 # To Run
-```node simple-todoserver.js```
+```
+$ node simple-todoserver.js
+```
 
 # APIs (REST)
 Accepts and serves ```application/json``` content. Send JSON string as body for the POST method 
