@@ -28,7 +28,7 @@
             "Access-Control-Allow-Methods": "GET, POST, GET, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type"
         },
-        server = require("serve-route").server,
+        server = require("route-r").server,
         addCorsHeaders = function (params) {
             params.headers = corsHeaders;
             return params;
